@@ -111,7 +111,7 @@ class ModelMetaclass(type):
 		primaryKey = None
 		for k, v in attrs.items():
 			if isinstance(v, Field):
-				logging.info('  found mapping: %s ==> %s' % (k, v))
+				#logging.info('  found mapping: %s ==> %s' % (k, v))
 				mappings[k] = v
 				if v.primary_key:
 					# 找到主键:
@@ -162,9 +162,11 @@ class Model(dict, metaclass=ModelMetaclass):
 				setattr(self, key, value)
 		return value
 
+	#@classmethod和@staticmethod作用类似于java中的 static 修饰符，可以让类名直接调用
 	@classmethod
 	async def findAll(cls, where=None, args=None, **kw):
-		' find objects by where clause. '
+		logging.info('[orm.py][findAll] where = %s, kw= %s , args = %s ================================' % (where,kw,args))
+		'find objects by where clause.'
 		sql = [cls.__select__]
 		if where:
 			sql.append('where')
@@ -186,12 +188,13 @@ class Model(dict, metaclass=ModelMetaclass):
 				args.extend(limit)
 			else:
 				raise ValueError('Invalid limit value: %s' % str(limit))
+		logging.info('sql = %s' % sql)
 		rs = await select(' '.join(sql), args)
 		return [cls(**r) for r in rs]
 
 	@classmethod
 	async def findNumber(cls, selectField, where=None, args=None):
-		' find number by select and where. '
+		logging.info(' find number by select and where.')
 		sql = ['select %s _num_ from `%s`' % (selectField, cls.__table__)]
 		if where:
 			sql.append('where')
@@ -203,7 +206,7 @@ class Model(dict, metaclass=ModelMetaclass):
 
 	@classmethod
 	async def find(cls, pk):
-		' find object by primary key. '
+		logging.info('[orm.py][find]find object by primary key. ')
 		rs = await select('%s where `%s`=?' % (cls.__select__, cls.__primary_key__), [pk], 1)
 		if len(rs) == 0:
 			return None
